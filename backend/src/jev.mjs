@@ -52,11 +52,11 @@ export async function warmJev() {
   await res.arrayBuffer();
 }
 
-export async function judgeWithJev(message) {
+export async function judgeWithJev(message, recipient) {
   const apiKey = await getApiKey();
   const body = JSON.stringify({
     model: process.env.JEV_MODEL,
-    state: buildState(message),
+    state: buildState(message, recipient),
     questions: buildQuestions(),
   });
 

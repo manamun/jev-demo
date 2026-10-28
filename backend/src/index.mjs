@@ -1,5 +1,6 @@
 import { judgeWithJev, warmJev } from "./jev.mjs";
 import { judgeWithLlm, warmLlm } from "./llm.mjs";
+import { RECIPIENTS, DEFAULT_RECIPIENT } from "./questions.mjs";
 
 const MAX_MESSAGE_LENGTH = 2000;
 
@@ -36,9 +37,12 @@ export async function handler(event) {
   }
 
   let message;
+  let recipient;
   try {
     const raw = event.isBase64Encoded ? Buffer.from(event.body, "base64").toString("utf8") : event.body;
-    message = JSON.parse(raw ?? "{}").message?.trim();
+    const body = JSON.parse(raw ?? "{}");
+    message = body.message?.trim();
+    recipient = body.recipient ?? DEFAULT_RECIPIENT;
   } catch {
     return respond(400, { error: "リクエストの JSON が不正です" });
   }
@@ -48,9 +52,12 @@ export async function handler(event) {
   if (message.length > MAX_MESSAGE_LENGTH) {
     return respond(400, { error: `メッセージは ${MAX_MESSAGE_LENGTH} 文字以内にしてください` });
   }
+  if (!Object.hasOwn(RECIPIENTS, recipient)) {
+    return respond(400, { error: "送る相手の指定が不正です" });
+  }
 
   try {
-    return respond(200, await judge(message));
+    return respond(200, await judge(message, recipient));
   } catch (err) {
     console.error(err);
     return respond(502, { error: "AI の呼び出しに失敗しました", detail: err.message });

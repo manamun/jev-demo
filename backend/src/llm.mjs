@@ -14,7 +14,7 @@ const TOOL_NAME = "submit_judgments";
 // Jev と同じ定義から 1 回の呼び出しで 3 つの判定を返させる。ツール使用を強制して JSON を受け取る。
 const SYSTEM_PROMPT = [
   "You judge a workplace message that the sender is about to send to their boss.",
-  "The input is a JSON object; `message` is the message text.",
+  "The input is a JSON object; `recipient` describes the boss and `message` is the message text.",
   `Answer three questions by calling the ${TOOL_NAME} tool exactly once. Do not write any other text.`,
   "",
   `1. message_type: ${MESSAGE_TYPE_INSTRUCTIONS}`,
@@ -62,11 +62,11 @@ export async function warmLlm() {
   );
 }
 
-export async function judgeWithLlm(message) {
+export async function judgeWithLlm(message, recipient) {
   const command = new ConverseCommand({
     modelId: process.env.BEDROCK_MODEL_ID,
     system: [{ text: SYSTEM_PROMPT }],
-    messages: [{ role: "user", content: [{ text: JSON.stringify(buildState(message)) }] }],
+    messages: [{ role: "user", content: [{ text: JSON.stringify(buildState(message, recipient)) }] }],
     toolConfig: TOOL_CONFIG,
     inferenceConfig: { maxTokens: 200, temperature: 0 },
   });

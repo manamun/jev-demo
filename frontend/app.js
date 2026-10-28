@@ -6,6 +6,10 @@ const SAMPLES = [
     text: "お疲れ様です。明日の定例ですが、資料の準備が間に合わないため、開始を30分後ろ倒しにしていただくことは可能でしょうか。ご検討のほどよろしくお願いいたします。",
   },
   {
+    label: "フランクな連絡",
+    text: "了解です！明日の資料、午前中には送りますね〜",
+  },
+  {
     label: "タメ口の報告",
     text: "例の件おわったよー。あとで見といて！",
   },
@@ -19,7 +23,13 @@ const SAMPLES = [
   },
 ];
 
-const OK_THRESHOLD = 0.7;
+// 判定の基準になる上司。キーは Lambda 側の RECIPIENTS と合わせる
+const RECIPIENTS = {
+  direct: "直属の上司（仲がいい）",
+  executive: "部長・役員クラス",
+};
+
+const OK_THRESHOLD = 0.6;
 const WARN_THRESHOLD = 0.4;
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -69,13 +79,45 @@ document.querySelectorAll(".samples").forEach((container) => {
   });
 });
 
+// ---------- 送る相手（2 つのタブで共有する） ----------
+
+let recipient = "direct";
+try {
+  const saved = localStorage.getItem("recipient");
+  if (saved in RECIPIENTS) recipient = saved;
+} catch {}
+
+const recipientButtons = [];
+document.querySelectorAll(".recipients").forEach((group) => {
+  Object.entries(RECIPIENTS).forEach(([key, label]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "recipient";
+    button.setAttribute("role", "radio");
+    button.dataset.recipient = key;
+    button.textContent = label;
+    button.addEventListener("click", () => selectRecipient(key));
+    group.append(button);
+    recipientButtons.push(button);
+  });
+});
+
+function selectRecipient(key) {
+  recipient = key;
+  recipientButtons.forEach((button) => {
+    button.setAttribute("aria-checked", String(button.dataset.recipient === key));
+  });
+  try { localStorage.setItem("recipient", key); } catch {}
+}
+selectRecipient(recipient);
+
 // ---------- API ----------
 
 async function postJudge(path, message) {
   const res = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, recipient }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -186,13 +228,14 @@ checkButton.addEventListener("click", async () => {
   checkButton.textContent = "チェック中…";
   showError(checkError, null);
 
+  const sentTo = recipient;
   const started = performance.now();
   try {
     const data = await postJudge("/api/check", message);
     const totalMs = performance.now() - started;
     renderCards(checkCards, data.result);
     checkCards.hidden = false;
-    checkMeta.textContent = `${data.model}・AI の処理時間 ${formatMs(data.aiMs)}・通信込み ${formatMs(totalMs)}`;
+    checkMeta.textContent = `相手：${RECIPIENTS[sentTo]}・${data.model}・AI の処理時間 ${formatMs(data.aiMs)}・通信込み ${formatMs(totalMs)}`;
     checkMeta.hidden = false;
   } catch (err) {
     showError(checkError, err);
