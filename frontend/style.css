@@ -216,6 +216,8 @@ main { padding-top: 20px; padding-bottom: 48px; }
 .timer small { font-size: 1rem; margin-left: 4px; color: var(--muted); }
 .timer.running { color: var(--lane-color); }
 
+.lane-note { margin: 12px 0 0; font-size: 0.75rem; color: var(--muted); }
+
 .times { margin: 0; display: grid; gap: 2px; font-size: 0.9rem; }
 .times div { display: flex; justify-content: space-between; gap: 8px; }
 .times dt { color: var(--muted); }
