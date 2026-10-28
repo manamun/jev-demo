@@ -207,11 +207,13 @@ main { padding-top: 20px; padding-bottom: 48px; }
 }
 .place.first { background: var(--lane-color); color: var(--accent-text); }
 
+.timer-caption { margin: 10px 0 0; font-size: 0.8rem; color: var(--muted); }
+
 .timer {
   font-variant-numeric: tabular-nums;
   font-size: 2.6rem;
   font-weight: 800;
-  margin: 8px 0;
+  margin: 0 0 8px;
 }
 .timer small { font-size: 1rem; margin-left: 4px; color: var(--muted); }
 .timer.running { color: var(--lane-color); }
