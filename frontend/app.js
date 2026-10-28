@@ -223,9 +223,8 @@ function setTimer(lane, ms) {
 function resetLane(lane) {
   setTimer(lane, 0);
   field(lane, "timer").classList.add("running");
-  field(lane, "caption").textContent = "経過時間（通信込み）";
+  field(lane, "ai").textContent = "—";
   field(lane, "total").textContent = "—";
-  field(lane, "overhead").textContent = "—";
   field(lane, "cards").replaceChildren();
   const place = field(lane, "place");
   place.hidden = true;
@@ -268,13 +267,11 @@ raceButton.addEventListener("click", async () => {
       finished += 1;
       placed += 1;
 
-      // 待っている間は通信込みの経過時間を数え、止まったら Lambda が測った AI の処理時間に切り替える
-      setTimer(lane, data.aiMs);
-      field(lane, "caption").textContent = "AI の処理時間";
+      setTimer(lane, totalMs);
       field(lane, "timer").classList.remove("running");
       field(lane, "model").textContent = data.model;
+      field(lane, "ai").textContent = formatMs(data.aiMs);
       field(lane, "total").textContent = formatMs(totalMs);
-      field(lane, "overhead").textContent = formatMs(totalMs - data.aiMs);
       const place = field(lane, "place");
       place.textContent = `${placed}着`;
       if (placed === 1) place.classList.add("first");
