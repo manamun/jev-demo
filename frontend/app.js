@@ -88,16 +88,13 @@ document.querySelectorAll(".samples").forEach((container) => {
   });
 });
 
-// i マークと、ホバーで出す吹き出しを作る（送る相手のボタンを作る前に定義しておく）
-let tooltipCount = 0;
-function infoTip(heading, body) {
-  const info = el("span", "info", "i");
-  info.setAttribute("aria-hidden", "true");
-  const tooltip = el("span", "tooltip");
-  tooltip.id = `tooltip-${++tooltipCount}`;
-  tooltip.setAttribute("role", "tooltip");
-  tooltip.append(el("strong", null, heading), ...body);
-  return [info, tooltip];
+// 「プロンプトを表示」で開閉する欄を作る
+function promptPanel(summary, body) {
+  const details = el("details", "prompt");
+  const content = el("div", "prompt-body");
+  content.append(...body);
+  details.append(el("summary", null, summary), content);
+  return details;
 }
 
 // ---------- 送る相手（2 つのタブで共有する） ----------
@@ -109,28 +106,33 @@ try {
 } catch {}
 
 const recipientButtons = [];
+const personaTexts = [];
 document.querySelectorAll(".recipients").forEach((group) => {
-  Object.entries(RECIPIENTS).forEach(([key, { label, description }]) => {
+  Object.entries(RECIPIENTS).forEach(([key, { label }]) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "recipient";
     button.setAttribute("role", "radio");
     button.dataset.recipient = key;
-
-    // i マークにホバー（またはボタンにフォーカス）すると、プロンプトに渡している上司像を表示する
-    const [info, tooltip] = infoTip("プロンプトに渡している上司像", [el("span", null, description)]);
-    button.setAttribute("aria-describedby", tooltip.id);
-    button.append(el("span", null, label), info, tooltip);
+    button.textContent = label;
     button.addEventListener("click", () => selectRecipient(key));
     group.append(button);
     recipientButtons.push(button);
   });
+
+  // 選んでいる上司について、プロンプトに渡している上司像を表示する
+  const persona = el("p");
+  personaTexts.push(persona);
+  group.append(promptPanel("上司像のプロンプトを表示", [persona]));
 });
 
 function selectRecipient(key) {
   recipient = key;
   recipientButtons.forEach((button) => {
     button.setAttribute("aria-checked", String(button.dataset.recipient === key));
+  });
+  personaTexts.forEach((persona) => {
+    persona.textContent = RECIPIENTS[key].description;
   });
   try { localStorage.setItem("recipient", key); } catch {}
 }
@@ -188,18 +190,18 @@ const QUESTION_PROMPTS = {
   },
 };
 
-function promptTip(question) {
+// カードの下に付ける、Jev・Haiku 共通の指示文の欄
+function questionPrompt(question) {
   const { kind, instructions, criteria } = QUESTION_PROMPTS[question];
   const list = el("ul");
   criteria.forEach((text) => list.append(el("li", null, text)));
-  return infoTip("プロンプトの指示文（Jev・Haiku 共通）", [el("span", "kind", kind), el("span", null, instructions), list]);
+  return promptPanel("プロンプトを表示", [el("p", "kind", `Jev・Haiku 共通の指示文（${kind}）`), el("p", null, instructions), list]);
 }
 
 function card(question, title, value, tone) {
   const node = el("div", `card${tone ? ` ${tone}` : ""}`);
-  const heading = el("h3", null, title);
-  heading.append(...promptTip(question));
-  node.append(heading, el("p", "value", value));
+  node.dataset.question = question;
+  node.append(el("h3", null, title), el("p", "value", value));
   return node;
 }
 
@@ -256,11 +258,13 @@ function okToSendCard({ ok, probability }) {
 }
 
 function renderCards(container, result, { compact = false } = {}) {
-  container.replaceChildren(
+  const cards = [
     messageTypeCard(result.messageType, compact),
     politenessCard(result.politeness),
     okToSendCard(result.okToSend),
-  );
+  ];
+  cards.forEach((node) => node.append(questionPrompt(node.dataset.question)));
+  container.replaceChildren(...cards);
 }
 
 // ---------- チェッカー ----------
