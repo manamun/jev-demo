@@ -132,7 +132,14 @@ main { padding-top: 20px; padding-bottom: 48px; }
   text-align: left;
   box-shadow: 0 6px 20px rgb(0 0 0 / 0.2);
 }
-.tooltip strong { display: block; margin-bottom: 4px; font-size: 0.75rem; opacity: 0.8; }
+.tooltip > * { display: block; }
+.tooltip strong { margin-bottom: 4px; font-size: 0.75rem; opacity: 0.8; }
+.tooltip .kind { font-size: 0.75rem; opacity: 0.8; margin-bottom: 6px; }
+.tooltip ul { margin: 6px 0 0; padding-left: 1.2em; }
+.tooltip li { margin-top: 2px; }
+.card { position: relative; }
+.card h3 { display: flex; align-items: center; gap: 6px; }
+.card .tooltip { top: 2.4em; margin-top: 0; }
 .info:hover ~ .tooltip,
 .recipient:focus-visible .tooltip { display: block; }
 
@@ -267,6 +274,23 @@ main { padding-top: 20px; padding-bottom: 48px; }
 }
 .timer small { font-size: 1rem; margin-left: 4px; color: var(--muted); }
 .timer.running { color: var(--lane-color); }
+
+.prompt { margin-top: 12px; font-size: 0.85rem; }
+.prompt summary { cursor: pointer; color: var(--muted); font-weight: 600; }
+.prompt pre {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
 
 .lane-note { margin: 12px 0 0; font-size: 0.75rem; color: var(--muted); }
 

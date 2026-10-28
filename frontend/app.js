@@ -1,5 +1,15 @@
-// 上司像は Lambda が Jev / LLM に渡しているものと同じファイルを読み込んで表示する
-import { RECIPIENTS, DEFAULT_RECIPIENT } from "./questions.mjs";
+// 上司像や指示文は、Lambda が Jev / LLM に渡しているものと同じファイルを読み込んで表示する
+import {
+  RECIPIENTS,
+  DEFAULT_RECIPIENT,
+  MESSAGE_TYPES,
+  MESSAGE_TYPE_INSTRUCTIONS,
+  POLITENESS_LEVELS,
+  POLITENESS_INSTRUCTIONS,
+  OK_TO_SEND,
+  LLM_TOOL_NAME,
+  LLM_SYSTEM_PROMPT,
+} from "./questions.mjs";
 
 const SAMPLES = [
   {
@@ -96,14 +106,8 @@ document.querySelectorAll(".recipients").forEach((group) => {
     button.dataset.recipient = key;
 
     // i マークにホバー（またはボタンにフォーカス）すると、プロンプトに渡している上司像を表示する
-    const tooltipId = `recipient-${key}-${group.dataset.panel}`;
-    const tooltip = el("span", "tooltip");
-    tooltip.id = tooltipId;
-    tooltip.setAttribute("role", "tooltip");
-    tooltip.append(el("strong", null, "プロンプトに渡している上司像"), el("span", null, description));
-    const info = el("span", "info", "i");
-    info.setAttribute("aria-hidden", "true");
-    button.setAttribute("aria-describedby", tooltipId);
+    const [info, tooltip] = infoTip("プロンプトに渡している上司像", [el("span", null, description)]);
+    button.setAttribute("aria-describedby", tooltip.id);
     button.append(el("span", null, label), info, tooltip);
     button.addEventListener("click", () => selectRecipient(key));
     group.append(button);
@@ -153,14 +157,54 @@ function el(tag, className, text) {
   return node;
 }
 
-function card(title, value, tone) {
+// i マークと、ホバーで出す吹き出しを作る
+let tooltipCount = 0;
+function infoTip(heading, body) {
+  const info = el("span", "info", "i");
+  info.setAttribute("aria-hidden", "true");
+  const tooltip = el("span", "tooltip");
+  tooltip.id = `tooltip-${++tooltipCount}`;
+  tooltip.setAttribute("role", "tooltip");
+  tooltip.append(el("strong", null, heading), ...body);
+  return [info, tooltip];
+}
+
+// カードごとに、Jev と Haiku に渡している指示文（共通）と選択肢の定義
+const QUESTION_PROMPTS = {
+  messageType: {
+    kind: "Jev では Choice（7 つから 1 つ選ぶ）",
+    instructions: MESSAGE_TYPE_INSTRUCTIONS,
+    criteria: Object.values(MESSAGE_TYPES).map((t) => t.description),
+  },
+  politeness: {
+    kind: "Jev では Score（0〜4 の 5 段階）",
+    instructions: POLITENESS_INSTRUCTIONS,
+    criteria: POLITENESS_LEVELS.map((level, i) => `${i}：${level.description}`),
+  },
+  okToSend: {
+    kind: "Jev では Noul（はい の確率）",
+    instructions: OK_TO_SEND.instructions,
+    criteria: [`はい：${OK_TO_SEND.criteria.true}`, `いいえ：${OK_TO_SEND.criteria.false}`],
+  },
+};
+
+function promptTip(question) {
+  const { kind, instructions, criteria } = QUESTION_PROMPTS[question];
+  const list = el("ul");
+  criteria.forEach((text) => list.append(el("li", null, text)));
+  return infoTip("プロンプトの指示文（Jev・Haiku 共通）", [el("span", "kind", kind), el("span", null, instructions), list]);
+}
+
+function card(question, title, value, tone) {
   const node = el("div", `card${tone ? ` ${tone}` : ""}`);
-  node.append(el("h3", null, title), el("p", "value", value));
+  const heading = el("h3", null, title);
+  heading.append(...promptTip(question));
+  node.append(heading, el("p", "value", value));
   return node;
 }
 
 function messageTypeCard({ label, confidence, probabilities }, compact) {
-  const node = card("メッセージの種類", label);
+  const node = card("messageType", "メッセージの種類", label);
   if (confidence != null) {
     node.append(el("p", "detail", `確信度 ${percent(confidence)}`));
   }
@@ -186,7 +230,7 @@ function messageTypeCard({ label, confidence, probabilities }, compact) {
 function politenessCard({ score, max, label, confidence }) {
   const distance = Math.abs(score - max / 2);
   const tone = distance < 0.75 ? "ok" : distance < 1.5 ? "warn" : "ng";
-  const node = card("丁寧さ", label, tone);
+  const node = card("politeness", "丁寧さ", label, tone);
 
   const meter = el("div", "meter");
   const marker = el("i");
@@ -202,11 +246,11 @@ function politenessCard({ score, max, label, confidence }) {
 
 function okToSendCard({ ok, probability }) {
   if (probability == null) {
-    return card("そのまま送っていい？", ok ? "送ってOK" : "直したほうがよい", ok ? "ok" : "ng");
+    return card("okToSend", "そのまま送っていい？", ok ? "送ってOK" : "直したほうがよい", ok ? "ok" : "ng");
   }
   const tone = probability >= OK_THRESHOLD ? "ok" : probability >= WARN_THRESHOLD ? "warn" : "ng";
   const value = { ok: "送ってOK", warn: "見直し推奨", ng: "直したほうがよい" }[tone];
-  const node = card("そのまま送っていい？", value, tone);
+  const node = card("okToSend", "そのまま送っていい？", value, tone);
   node.append(el("p", "detail", `送ってよい確率 ${percent(probability)}`));
   return node;
 }
@@ -341,6 +385,13 @@ raceButton.addEventListener("click", async () => {
   raceButton.disabled = false;
   raceButton.textContent = "対決";
 });
+
+// ---------- Haiku に渡している指示文 ----------
+
+$("#llm-system-prompt").textContent =
+  `【システムプロンプト】\n${LLM_SYSTEM_PROMPT}\n\n` +
+  `【ユーザーメッセージ】\n{"recipient": "（選んだ上司像）", "message": "（入力したメッセージ）"}\n\n` +
+  `※ ${LLM_TOOL_NAME} ツールの使用を強制し、message_type・politeness・ok_to_send を JSON で受け取っています。`;
 
 // ---------- ウォームアップ ----------
 

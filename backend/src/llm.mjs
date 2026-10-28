@@ -1,33 +1,15 @@
 import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
 import {
   MESSAGE_TYPES,
-  MESSAGE_TYPE_INSTRUCTIONS,
   POLITENESS_LEVELS,
-  POLITENESS_INSTRUCTIONS,
-  OK_TO_SEND,
+  LLM_TOOL_NAME as TOOL_NAME,
+  LLM_SYSTEM_PROMPT as SYSTEM_PROMPT,
   buildState,
 } from "./questions.mjs";
 
 const bedrock = new BedrockRuntimeClient({});
-const TOOL_NAME = "submit_judgments";
 
-// Jev と同じ定義から 1 回の呼び出しで 3 つの判定を返させる。ツール使用を強制して JSON を受け取る。
-const SYSTEM_PROMPT = [
-  "あなたは、送り手が上司に送ろうとしている仕事のメッセージを判定します。",
-  "入力は JSON オブジェクトで、`recipient` は上司の人物像、`message` はメッセージ本文です。",
-  `次の 3 つの質問に、${TOOL_NAME} ツールを 1 回だけ呼んで答えてください。ほかの文章は書かないでください。`,
-  "",
-  `1. message_type: ${MESSAGE_TYPE_INSTRUCTIONS}`,
-  ...Object.entries(MESSAGE_TYPES).map(([key, t]) => `   - ${key}: ${t.description}`),
-  "",
-  `2. politeness: ${POLITENESS_INSTRUCTIONS} 段階の番号で答える。`,
-  ...POLITENESS_LEVELS.map((level, i) => `   - ${i}: ${level.description}`),
-  "",
-  `3. ok_to_send: ${OK_TO_SEND.instructions}`,
-  `   - true: ${OK_TO_SEND.criteria.true}`,
-  `   - false: ${OK_TO_SEND.criteria.false}`,
-].join("\n");
-
+// ツール使用を強制して、3 つの判定を JSON で受け取る
 const TOOL_CONFIG = {
   tools: [
     {
