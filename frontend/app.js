@@ -88,6 +88,18 @@ document.querySelectorAll(".samples").forEach((container) => {
   });
 });
 
+// i マークと、ホバーで出す吹き出しを作る（送る相手のボタンを作る前に定義しておく）
+let tooltipCount = 0;
+function infoTip(heading, body) {
+  const info = el("span", "info", "i");
+  info.setAttribute("aria-hidden", "true");
+  const tooltip = el("span", "tooltip");
+  tooltip.id = `tooltip-${++tooltipCount}`;
+  tooltip.setAttribute("role", "tooltip");
+  tooltip.append(el("strong", null, heading), ...body);
+  return [info, tooltip];
+}
+
 // ---------- 送る相手（2 つのタブで共有する） ----------
 
 let recipient = DEFAULT_RECIPIENT;
@@ -155,18 +167,6 @@ function el(tag, className, text) {
   if (className) node.className = className;
   if (text != null) node.textContent = text;
   return node;
-}
-
-// i マークと、ホバーで出す吹き出しを作る
-let tooltipCount = 0;
-function infoTip(heading, body) {
-  const info = el("span", "info", "i");
-  info.setAttribute("aria-hidden", "true");
-  const tooltip = el("span", "tooltip");
-  tooltip.id = `tooltip-${++tooltipCount}`;
-  tooltip.setAttribute("role", "tooltip");
-  tooltip.append(el("strong", null, heading), ...body);
-  return [info, tooltip];
 }
 
 // カードごとに、Jev と Haiku に渡している指示文（共通）と選択肢の定義
