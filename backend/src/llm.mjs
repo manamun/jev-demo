@@ -13,14 +13,14 @@ const TOOL_NAME = "submit_judgments";
 
 // Jev と同じ定義から 1 回の呼び出しで 3 つの判定を返させる。ツール使用を強制して JSON を受け取る。
 const SYSTEM_PROMPT = [
-  "You judge a workplace message that the sender is about to send to their boss.",
-  "The input is a JSON object; `recipient` describes the boss and `message` is the message text.",
-  `Answer three questions by calling the ${TOOL_NAME} tool exactly once. Do not write any other text.`,
+  "あなたは、送り手が上司に送ろうとしている仕事のメッセージを判定します。",
+  "入力は JSON オブジェクトで、`recipient` は上司の人物像、`message` はメッセージ本文です。",
+  `次の 3 つの質問に、${TOOL_NAME} ツールを 1 回だけ呼んで答えてください。ほかの文章は書かないでください。`,
   "",
   `1. message_type: ${MESSAGE_TYPE_INSTRUCTIONS}`,
   ...Object.entries(MESSAGE_TYPES).map(([key, t]) => `   - ${key}: ${t.description}`),
   "",
-  `2. politeness: ${POLITENESS_INSTRUCTIONS} Answer with the level number.`,
+  `2. politeness: ${POLITENESS_INSTRUCTIONS} 段階の番号で答える。`,
   ...POLITENESS_LEVELS.map((level, i) => `   - ${i}: ${level.description}`),
   "",
   `3. ok_to_send: ${OK_TO_SEND.instructions}`,
@@ -33,7 +33,7 @@ const TOOL_CONFIG = {
     {
       toolSpec: {
         name: TOOL_NAME,
-        description: "Submit the three judgments about the message.",
+        description: "メッセージについての 3 つの判定を提出する。",
         inputSchema: {
           json: {
             type: "object",

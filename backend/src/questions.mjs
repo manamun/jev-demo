@@ -1,14 +1,14 @@
 // Jev と LLM に同じ 3 つの判定を頼むための定義。
-// Jev は英語が主な学習言語なので、指示は英語・メッセージ本文は日本語のまま渡す。
+// デモで中身を読めるよう、指示も日本語で書いている（Jev の主な学習言語は英語なので、精度は英語より落ちうる）。
 
 export const MESSAGE_TYPES = {
-  report: { label: "報告", description: "Report: conveys the result or progress of work the sender has already done." },
-  notice: { label: "連絡", description: "Notice: shares information, schedules, or facts the boss should be aware of." },
-  consult: { label: "相談", description: "Consultation: asks for the boss's opinion or advice before the sender decides something." },
-  request: { label: "依頼", description: "Request: asks the boss to do, approve, or provide something." },
-  apology: { label: "謝罪", description: "Apology: apologizes for a mistake, delay, or trouble the sender caused." },
-  thanks: { label: "お礼", description: "Thanks: mainly expresses gratitude to the boss." },
-  other: { label: "その他", description: "Other: none of the above, or not a work message." },
+  report: { label: "報告", description: "報告：送り手がすでに行った仕事の結果や進み具合を伝えている。" },
+  notice: { label: "連絡", description: "連絡：上司が知っておくべき情報・予定・事実を共有している。" },
+  consult: { label: "相談", description: "相談：送り手が何かを決める前に、上司の意見や助言を求めている。" },
+  request: { label: "依頼", description: "依頼：上司に何かをしてもらう、承認してもらう、提供してもらうよう頼んでいる。" },
+  apology: { label: "謝罪", description: "謝罪：送り手のミス・遅れ・迷惑について謝っている。" },
+  thanks: { label: "お礼", description: "お礼：主に上司への感謝を伝えている。" },
+  other: { label: "その他", description: "その他：上のどれにも当てはまらない、または仕事のメッセージではない。" },
 };
 
 // 判定の基準になる上司像。丁寧さと「そのまま送っていいか」は、選んだ上司にとってどうかで判定する
@@ -16,18 +16,18 @@ export const RECIPIENTS = {
   direct: {
     label: "直属の上司（仲がいい）",
     description:
-      "The sender's direct manager in the same team at a Japanese company. They work together every day and get along well; " +
-      "the manager is friendly and laid-back. Light polite Japanese (です・ます) with a friendly tone, casual softeners, " +
-      "or exclamation marks is perfectly fine, and stiff formal keigo would feel distant. " +
-      "Plain friend-like speech with no polite forms at all (タメ口) is still a bit too casual. Short, clear messages are welcome.",
+      "日本の会社で、送り手と同じチームの直属の上司。毎日一緒に働いていて仲がよく、気さくでおおらかな人。" +
+      "軽いです・ます調で、親しみのある言い回しやくだけた緩衝表現、「！」が入っていてもまったく問題ない。" +
+      "かしこまった硬い敬語だと、かえって距離を感じる。" +
+      "ただし、です・ますのない友達口調（タメ口）は少しくだけすぎ。短く分かりやすいメッセージを好む。",
   },
   executive: {
     label: "部長・役員クラス",
     description:
-      "A senior manager or executive (部長・役員) at a Japanese company, several levels above the sender, " +
-      "whom the sender rarely talks to directly. They expect the standard business keigo used toward senior people inside a company " +
-      "(for example 〜いたします, 〜いただけますでしょうか, よろしくお願いいたします), with no casual expressions or exclamation marks. " +
-      "A request written in such keigo is exactly right. Letter-style ceremonial phrasing that buries the point is still not welcome.",
+      "日本の会社で、送り手より何段階も上の部長・役員クラスの人。送り手が直接話すことはあまりない。" +
+      "社内で目上の人に使う標準的なビジネス敬語（例：〜いたします、〜いただけますでしょうか、よろしくお願いいたします）を期待し、" +
+      "くだけた表現や「！」は好まない。そうした敬語で書かれた依頼はまさにちょうどよい。" +
+      "ただし、手紙のような儀礼的な言い回しで要点が埋もれるのも好まない。",
   },
 };
 
@@ -36,43 +36,43 @@ export const DEFAULT_RECIPIENT = "direct";
 export const POLITENESS_LEVELS = [
   {
     label: "くだけすぎ",
-    description: "Far too casual for the `recipient`: clearly below the level of politeness they expect.",
+    description: "`recipient` に対して、くだけすぎ：相手が期待する丁寧さを明らかに下回っている。",
   },
   {
     label: "ややくだけている",
-    description: "A bit too casual for the `recipient`: mostly fine, but some wording is more casual than they expect.",
+    description: "`recipient` に対して、ややくだけている：おおむね問題ないが、相手の期待よりくだけた言葉づかいがある。",
   },
   {
     label: "ちょうどよい",
-    description: "Just right for the `recipient`: the politeness matches what they expect.",
+    description: "`recipient` に対して、ちょうどよい：丁寧さが相手の期待に合っている。",
   },
   {
     label: "やや硬い",
-    description: "A bit too formal for the `recipient`: stiffer or more roundabout than they expect.",
+    description: "`recipient` に対して、やや硬い：相手の期待より堅苦しい、または回りくどい。",
   },
   {
     label: "丁寧すぎ",
-    description: "Far too formal for the `recipient`: piled-up honorifics or overly humble phrasing that hurts readability.",
+    description: "`recipient` に対して、丁寧すぎ：敬語を重ねすぎたり、へりくだりすぎたりして読みにくい。",
   },
 ];
 
 export const OK_TO_SEND = {
   instructions:
-    "Would the `recipient` find the `message` acceptable to receive as-is? " +
-    "A message is acceptable only if both hold: its politeness suits the recipient, and the recipient can tell what is being " +
-    "reported or asked without guessing. It does not need to be perfect.",
+    "`recipient` は、この `message` をそのまま受け取って問題ないと感じるか？" +
+    "次の 2 つがどちらも満たされていれば問題ないとする：丁寧さが相手に合っていること、" +
+    "何を報告・依頼しているのかを相手が推測せずに分かること。完璧である必要はない。",
   criteria: {
-    true: "Acceptable to send to the recipient as-is.",
-    false: "Has a clear problem: the politeness does not suit this recipient, or the point is vague.",
+    true: "この相手に、そのまま送って問題ない。",
+    false: "はっきりした問題がある：丁寧さがこの相手に合っていない、または要点があいまい。",
   },
 };
 
 export const MESSAGE_TYPE_INSTRUCTIONS =
-  "What kind of workplace message is the `message` that the sender is about to send to the `recipient`? " +
-  "Pick the purpose that best describes the message as a whole.";
+  "送り手が `recipient` に送ろうとしている `message` は、どんな種類の仕事のメッセージか？" +
+  "メッセージ全体の目的にいちばん近いものを選ぶ。";
 
 export const POLITENESS_INSTRUCTIONS =
-  "How polite is the wording of the `message`, compared with the level of politeness the `recipient` expects?";
+  "`message` の言葉づかいは、`recipient` が期待する丁寧さと比べてどのくらい丁寧か？";
 
 export function buildState(message, recipient) {
   return {
