@@ -1,4 +1,5 @@
-"use strict";
+// 上司像は Lambda が Jev / LLM に渡しているものと同じファイルを読み込んで表示する
+import { RECIPIENTS, DEFAULT_RECIPIENT } from "./questions.mjs";
 
 const SAMPLES = [
   {
@@ -26,12 +27,6 @@ const SAMPLES = [
     text: "お疲れ様です。本日提出予定だったA社向け見積書の送付が遅れ、先方にご迷惑をおかけしました。申し訳ございません。15時までに送付いたします。",
   },
 ];
-
-// 判定の基準になる上司。キーは Lambda 側の RECIPIENTS と合わせる
-const RECIPIENTS = {
-  direct: "直属の上司（仲がいい）",
-  executive: "部長・役員クラス",
-};
 
 const OK_THRESHOLD = 0.6;
 const WARN_THRESHOLD = 0.4;
@@ -85,21 +80,31 @@ document.querySelectorAll(".samples").forEach((container) => {
 
 // ---------- 送る相手（2 つのタブで共有する） ----------
 
-let recipient = "direct";
+let recipient = DEFAULT_RECIPIENT;
 try {
   const saved = localStorage.getItem("recipient");
-  if (saved in RECIPIENTS) recipient = saved;
+  if (Object.hasOwn(RECIPIENTS, saved)) recipient = saved;
 } catch {}
 
 const recipientButtons = [];
 document.querySelectorAll(".recipients").forEach((group) => {
-  Object.entries(RECIPIENTS).forEach(([key, label]) => {
+  Object.entries(RECIPIENTS).forEach(([key, { label, description }]) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "recipient";
     button.setAttribute("role", "radio");
     button.dataset.recipient = key;
-    button.textContent = label;
+
+    // i マークにホバー（またはボタンにフォーカス）すると、プロンプトに渡している上司像を表示する
+    const tooltipId = `recipient-${key}-${group.dataset.panel}`;
+    const tooltip = el("span", "tooltip");
+    tooltip.id = tooltipId;
+    tooltip.setAttribute("role", "tooltip");
+    tooltip.append(el("strong", null, "プロンプトに渡している上司像"), el("span", null, description));
+    const info = el("span", "info", "i");
+    info.setAttribute("aria-hidden", "true");
+    button.setAttribute("aria-describedby", tooltipId);
+    button.append(el("span", null, label), info, tooltip);
     button.addEventListener("click", () => selectRecipient(key));
     group.append(button);
     recipientButtons.push(button);
@@ -239,7 +244,7 @@ checkButton.addEventListener("click", async () => {
     const totalMs = performance.now() - started;
     renderCards(checkCards, data.result);
     checkCards.hidden = false;
-    checkMeta.textContent = `相手：${RECIPIENTS[sentTo]}・${data.model}・AI の処理時間 ${formatMs(data.aiMs)}・通信込み ${formatMs(totalMs)}`;
+    checkMeta.textContent = `相手：${RECIPIENTS[sentTo].label}・${data.model}・AI の処理時間 ${formatMs(data.aiMs)}・通信込み ${formatMs(totalMs)}`;
     checkMeta.hidden = false;
   } catch (err) {
     showError(checkError, err);

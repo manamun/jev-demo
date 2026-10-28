@@ -29,6 +29,15 @@ resource "aws_s3_object" "site" {
   content_type = local.content_types[regex("[^.]+$", each.value)]
 }
 
+# 画面に上司像を表示するため、Lambda が使っているプロンプト定義をそのまま配信する
+resource "aws_s3_object" "questions" {
+  bucket       = aws_s3_bucket.site.id
+  key          = "questions.mjs"
+  source       = "${path.module}/../backend/src/questions.mjs"
+  etag         = filemd5("${path.module}/../backend/src/questions.mjs")
+  content_type = "text/javascript; charset=utf-8"
+}
+
 resource "aws_s3_bucket_policy" "site" {
   bucket = aws_s3_bucket.site.id
   policy = jsonencode({
@@ -142,7 +151,7 @@ resource "aws_cloudfront_distribution" "site" {
 
 # フロントを更新したらキャッシュを消す
 resource "terraform_data" "invalidate" {
-  triggers_replace = [for o in aws_s3_object.site : o.etag]
+  triggers_replace = concat([for o in aws_s3_object.site : o.etag], [aws_s3_object.questions.etag])
 
   provisioner "local-exec" {
     command = "aws cloudfront create-invalidation --profile ${var.aws_profile} --distribution-id ${aws_cloudfront_distribution.site.id} --paths '/*'"
