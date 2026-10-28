@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>上司メッセージチェッカー</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>上司メッセージチェッカー</h1>
+    <p class="subtitle">送る前に、Jev が 3 つの観点でチェックします</p>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-check" aria-controls="panel-check" aria-selected="true">チェッカー</button>
+    <button class="tab" role="tab" id="tab-race" aria-controls="panel-race" aria-selected="false">スピード対決</button>
+  </nav>
+
+  <main>
+    <section class="panel" id="panel-check" role="tabpanel" aria-labelledby="tab-check">
+      <div class="composer">
+        <label for="message-check">上司に送るメッセージ</label>
+        <textarea id="message-check" class="message-input" rows="6" maxlength="2000"
+          placeholder="例：お疲れ様です。明日の定例ですが、資料の準備が間に合わないため 30 分後ろ倒しにしていただけないでしょうか。"></textarea>
+        <div class="samples" aria-label="サンプル"></div>
+        <div class="actions">
+          <button id="check-button" class="primary">チェック</button>
+        </div>
+      </div>
+      <p class="error" id="check-error" hidden></p>
+      <div class="cards" id="check-cards" hidden></div>
+      <p class="meta" id="check-meta" hidden></p>
+    </section>
+
+    <section class="panel" id="panel-race" role="tabpanel" aria-labelledby="tab-race" hidden>
+      <div class="composer">
+        <label for="message-race">上司に送るメッセージ</label>
+        <textarea id="message-race" class="message-input" rows="6" maxlength="2000"
+          placeholder="チェッカーと同じ文章で、Jev と LLM（Claude Haiku）の速さを比べます"></textarea>
+        <div class="samples" aria-label="サンプル"></div>
+        <div class="actions">
+          <button id="race-button" class="primary">対決</button>
+        </div>
+      </div>
+      <p class="error" id="race-error" hidden></p>
+      <div class="race">
+        <article class="lane" id="lane-jev">
+          <header class="lane-head">
+            <h2>Jev</h2>
+            <span class="lane-model" data-field="model">TypeSafe System One</span>
+            <span class="place" data-field="place" hidden></span>
+          </header>
+          <div class="timer" data-field="timer">0.000<small>秒</small></div>
+          <dl class="times">
+            <div><dt>AI の処理時間</dt><dd data-field="ai">—</dd></div>
+            <div><dt>通信込みの時間</dt><dd data-field="total">—</dd></div>
+          </dl>
+          <div class="cards compact" data-field="cards"></div>
+        </article>
+        <article class="lane" id="lane-llm">
+          <header class="lane-head">
+            <h2>LLM</h2>
+            <span class="lane-model" data-field="model">Amazon Bedrock</span>
+            <span class="place" data-field="place" hidden></span>
+          </header>
+          <div class="timer" data-field="timer">0.000<small>秒</small></div>
+          <dl class="times">
+            <div><dt>AI の処理時間</dt><dd data-field="ai">—</dd></div>
+            <div><dt>通信込みの時間</dt><dd data-field="total">—</dd></div>
+          </dl>
+          <div class="cards compact" data-field="cards"></div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

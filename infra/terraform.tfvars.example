@@ -1,0 +1,4 @@
+aws_profile         = "jev-demo"
+bedrock_model_id    = "jp.anthropic.claude-haiku-5-5" # aws bedrock list-inference-profiles で確認した ID に置き換える
+basic_auth_user     = "your-user"
+basic_auth_password = "your-password"
