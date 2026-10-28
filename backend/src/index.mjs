@@ -1,5 +1,5 @@
-import { judgeWithJev } from "./jev.mjs";
-import { judgeWithLlm } from "./llm.mjs";
+import { judgeWithJev, warmJev } from "./jev.mjs";
+import { judgeWithLlm, warmLlm } from "./llm.mjs";
 
 const MAX_MESSAGE_LENGTH = 2000;
 
@@ -21,6 +21,13 @@ export async function handler(event) {
   // CloudFront 経由（Basic 認証済み）以外からの直接アクセスを拒否する
   if (event.headers?.["x-origin-secret"] !== process.env.ORIGIN_SECRET) {
     return respond(403, { error: "forbidden" });
+  }
+
+  // 対決の前にコールドスタートと初回の接続を済ませる。どのインスタンスが対決を受けても温まっているよう、両方を準備する
+  if (event.routeKey === "POST /api/warmup") {
+    const results = await Promise.allSettled([warmJev(), warmLlm()]);
+    results.filter((r) => r.status === "rejected").forEach((r) => console.error(r.reason));
+    return respond(200, { warmed: results.map((r) => r.status === "fulfilled") });
   }
 
   const judge = ROUTES[event.routeKey];

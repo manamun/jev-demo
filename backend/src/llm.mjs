@@ -51,6 +51,17 @@ const TOOL_CONFIG = {
   toolChoice: { tool: { name: TOOL_NAME } },
 };
 
+// 認証情報の読み込みと Bedrock への接続を済ませておく（1 トークンだけ出力させる）
+export async function warmLlm() {
+  await bedrock.send(
+    new ConverseCommand({
+      modelId: process.env.BEDROCK_MODEL_ID,
+      messages: [{ role: "user", content: [{ text: "hi" }] }],
+      inferenceConfig: { maxTokens: 1 },
+    }),
+  );
+}
+
 export async function judgeWithLlm(message) {
   const command = new ConverseCommand({
     modelId: process.env.BEDROCK_MODEL_ID,

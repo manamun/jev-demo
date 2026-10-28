@@ -92,7 +92,7 @@ resource "aws_apigatewayv2_integration" "api" {
 }
 
 resource "aws_apigatewayv2_route" "api" {
-  for_each  = toset(["POST /api/check", "POST /api/race/jev", "POST /api/race/llm"])
+  for_each  = toset(["POST /api/check", "POST /api/race/jev", "POST /api/race/llm", "POST /api/warmup"])
   api_id    = aws_apigatewayv2_api.api.id
   route_key = each.value
   target    = "integrations/${aws_apigatewayv2_integration.api.id}"

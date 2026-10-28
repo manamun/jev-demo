@@ -289,3 +289,22 @@ raceButton.addEventListener("click", async () => {
   raceButton.disabled = false;
   raceButton.textContent = "対決";
 });
+
+// ---------- ウォームアップ ----------
+
+// 対決では 2 本のリクエストが別々の Lambda インスタンスに届くので、2 本同時に送って 2 台とも起こしておく。
+// Lambda が温まっているのは最後のアクセスから数分なので、時間が空いたら対決タブを開いたときにもう一度起こす。
+const WARM_INTERVAL_MS = 4 * 60 * 1000;
+let lastWarmedAt = 0;
+
+function warmUp() {
+  if (lastWarmedAt && performance.now() - lastWarmedAt < WARM_INTERVAL_MS) return;
+  lastWarmedAt = performance.now();
+  for (let i = 0; i < 2; i++) {
+    fetch("/api/warmup", { method: "POST" }).catch(() => {});
+  }
+}
+
+$("#tab-race").addEventListener("click", warmUp);
+[...document.querySelectorAll(".message-input")].forEach((input) => input.addEventListener("focus", warmUp));
+warmUp();

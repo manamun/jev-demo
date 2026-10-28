@@ -9,6 +9,7 @@ import {
 } from "./questions.mjs";
 
 const JEV_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
+const JEV_MODELS_ENDPOINT = "https://api.typesafe.ai/v1/models";
 const ssm = new SSMClient({});
 let apiKeyPromise;
 
@@ -42,6 +43,13 @@ function buildQuestions() {
       criteria: OK_TO_SEND.criteria,
     },
   };
+}
+
+// API キーを取得し、課金のない GET /v1/models で Jev API への接続を確立しておく
+export async function warmJev() {
+  const apiKey = await getApiKey();
+  const res = await fetch(JEV_MODELS_ENDPOINT, { headers: { Authorization: `Bearer ${apiKey}` } });
+  await res.arrayBuffer();
 }
 
 export async function judgeWithJev(message) {
